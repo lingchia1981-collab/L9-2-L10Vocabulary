@@ -225,18 +225,6 @@
             z-index: 50;
             box-shadow: 0 0 8px #38bdf8;
         }
-        /* 隱身斗篷防護罩：鎖定 Google Translate 音訊的原始來源與格式，防止任何平台或容器上傳後修改或失真 */
-        .cloak-of-invisibility {
-            position: fixed !important;
-            top: -9999px !important;
-            left: -9999px !important;
-            width: 1px !important;
-            height: 1px !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-            visibility: hidden !important;
-            z-index: -9999 !important;
-        }
     </style>
 </head>
 <body>
@@ -268,9 +256,6 @@
         <button class="start-btn" id="action-btn" type="button" onclick="startGame()">Play 🚀</button>
     </div>
 </div>
-
-<!-- 隱身斗篷防護室：完全封存 Google Translate TTS 音訊串流，確保上傳或在任何伺服器/預覽環境執行時音質與格式永不改變 -->
-<div id="audio-cloak-room" class="cloak-of-invisibility" aria-hidden="true"></div>
 
 <script>
     const questions = [
@@ -401,23 +386,31 @@
             currentAudio = null;
         }
         const q = shuffledQuestions[currentIndex];
-        // 嚴格維持 Google Translate TTS 官方標準請求參數格式，確保上傳或跨域佈署時語音來源不變不壞
-        const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(q.word)}&tl=zh-TW&client=tw-ob`;
         
-        currentAudio = new Audio();
-        currentAudio.crossOrigin = "anonymous";
-        currentAudio.preload = "auto";
-        currentAudio.src = audioUrl;
+        // 使用多重備援與真實的 Google Translate 語音 API 串流，並繞過環境轉碼限制
+        const audioUrls = [
+            `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(q.word)}&tl=zh-TW&client=tw-ob`,
+            `https://clients1.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(q.word)}&tl=zh-TW&client=dict-chrome-ex`
+        ];
 
-        // 將音訊物件實例安全置入隱身斗篷防護室中，隔絕所有外部干擾
-        const cloakRoom = document.getElementById('audio-cloak-room');
-        cloakRoom.innerHTML = '';
-        cloakRoom.appendChild(currentAudio);
-
-        currentAudio.play().catch(error => {
-            console.log("Audio play failed, fallback to synthesis:", error);
-            fallbackSpeech(q.word);
-        });
+        let urlIndex = 0;
+        function tryPlay() {
+            if (urlIndex >= audioUrls.length) {
+                fallbackSpeech(q.word);
+                return;
+            }
+            currentAudio = new Audio();
+            currentAudio.crossOrigin = "anonymous";
+            currentAudio.preload = "auto";
+            currentAudio.src = audioUrls[urlIndex];
+            
+            currentAudio.play().catch(err => {
+                console.log("TTS mirror failed, trying next...", err);
+                urlIndex++;
+                tryPlay();
+            });
+        }
+        tryPlay();
     }
 
     function fallbackSpeech(text) {
