@@ -2,7 +2,8 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="referrer" content="no-referrer">
+    <!-- 隱身斗篷：阻絕網址外洩，讓 Google Translate 語音順利播放 -->
+    <meta name="referrer" content="no-referrer"> 
     <title>Word Quest</title>
     <style>
         html, body {
@@ -226,13 +227,6 @@
             z-index: 50;
             box-shadow: 0 0 8px #38bdf8;
         }
-
-        #audio-cloak-room {
-            position: fixed !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-            z-index: -9999 !important;
-        }
     </style>
 </head>
 <body>
@@ -265,8 +259,6 @@
     </div>
 </div>
 
-<div id="audio-cloak-room"></div>
-
 <script>
     const questions = [
         { word: "號", pinyin: "hào", pinyinOptions: ["hào", "guàng", "gěi", "huángsè"], hanziOptions: ["號", "逛", "給", "黃色"] },
@@ -283,16 +275,16 @@
         { word: "西瓜", pinyin: "xīguā", pinyinOptions: ["xīguā", "mángguǒ", "hóngsè", "yèshì"], hanziOptions: ["西瓜", "芒果", "紅色", "夜市"] },
         { word: "拍", pinyin: "pāi", pinyinOptions: ["pāi", "xiào", "chuān", "lǚguǎn"], hanziOptions: ["拍", "笑", "穿", "旅館"] },
         { word: "笑", pinyin: "xiào", pinyinOptions: ["xiào", "pāi", "nán", "ǎi"], hanziOptions: ["笑", "拍", "男", "矮"] },
-        { word: "穿", pinyin: "chuān", pinyinOptions: ["chuān", "gānjìng", "chuānghù", "wǎng"], hanziOptions: ["穿", "乾淨", "窗戶", "往"] },
-        { word: "旅館", pinyin: "lǚguǎn", pinyinOptions: ["lǚguǎn", "lánsè", "yīnwèi", "zhèxiē"], hanziOptions: ["旅館", "藍色", "因為", "這些"] },
+        { word: "穿", pinyin: "chuān", pinyinOptions: ["chuān", "gān jìng", "chuāng hù", "wǎng"], hanziOptions: ["穿", "乾淨", "窗戶", "往"] },
+        { word: "旅館", pinyin: "lǚ guǎn", pinyinOptions: ["lǚ guǎn", "lán sè", "yīn wèi", "zhè xiē"], hanziOptions: ["旅館", "藍色", "因為", "這些"] },
         { word: "男", pinyin: "nán", pinyinOptions: ["nán", "ǎi", "pāi", "xiào"], hanziOptions: ["男", "矮", "拍", "笑"] },
-        { word: "矮", pinyin: "ǎi", pinyinOptions: ["ǎi", "nán", "gānjìng", "chuān"], hanziOptions: ["矮", "男", "乾淨", "穿"] },
-        { word: "乾淨", pinyin: "gānjìng", pinyinOptions: ["gānjìng", "chuānghù", "lǚguǎn", "wǎng"], hanziOptions: ["乾淨", "窗戶", "旅館", "往"] },
-        { word: "窗戶", pinyin: "chuānghù", pinyinOptions: ["chuānghù", "gānjìng", "lánsè", "yīnwèi"], hanziOptions: ["窗戶", "乾淨", "藍色", "因為"] },
-        { word: "往", pinyin: "wǎng", pinyinOptions: ["wǎng", "zhèxiē", "chuān", "lǚguǎn"], hanziOptions: ["往", "這些", "穿", "旅館"] },
-        { word: "藍色", pinyin: "lánsè", pinyinOptions: ["lánsè", "yīnwèi", "huángsè", "hóngsè"], hanziOptions: ["藍色", "因為", "黃色", "紅色"] },
-        { word: "因為", pinyin: "yīnwèi", pinyinOptions: ["yīnwèi", "zhèxiē", "lánsè", "lǚguǎn"], hanziOptions: ["因為", "這些", "藍色", "旅館"] },
-        { word: "這些", pinyin: "zhèxiē", pinyinOptions: ["zhèxiē", "yīnwèi", "wǎng", "chuānghù"], hanziOptions: ["這些", "因為", "往", "窗戶"] }
+        { word: "矮", pinyin: "ǎi", pinyinOptions: ["ǎi", "nán", "gān jìng", "chuān"], hanziOptions: ["矮", "男", "乾淨", "穿"] },
+        { word: "乾淨", pinyin: "gān jìng", pinyinOptions: ["gān jìng", "chuāng hù", "lǚ guǎn", "wǎng"], hanziOptions: ["乾淨", "窗戶", "旅館", "往"] },
+        { word: "窗戶", pinyin: "chuāng hù", pinyinOptions: ["chuāng hù", "gān jìng", "lán sè", "yīn wèi"], hanziOptions: ["窗戶", "乾淨", "藍色", "因為"] },
+        { word: "往", pinyin: "wǎng", pinyinOptions: ["wǎng", "zhè xiē", "chuān", "lǚ guǎn"], hanziOptions: ["往", "這些", "穿", "旅館"] },
+        { word: "藍色", pinyin: "lán sè", pinyinOptions: ["lán sè", "yīn wèi", "huáng sè", "hóng sè"], hanziOptions: ["藍色", "因為", "黃色", "紅色"] },
+        { word: "因為", pinyin: "yīn wèi", pinyinOptions: ["yīn wèi", "zhè xiē", "lán sè", "lǚ guǎn"], hanziOptions: ["因為", "這些", "藍色", "旅館"] },
+        { word: "這些", pinyin: "zhè xiē", pinyinOptions: ["zhè xiē", "yīn wèi", "wǎng", "chuāng hù"], hanziOptions: ["這些", "因為", "往", "窗戶"] }
     ];
 
     let shuffledQuestions = [];
@@ -396,31 +388,22 @@
             currentAudio = null;
         }
         const q = shuffledQuestions[currentIndex];
-        
-        const audioUrls = [
-            `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(q.word)}&tl=zh-TW&client=tw-ob`,
-            `https://clients1.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(q.word)}&tl=zh-TW&client=dict-chrome-ex`
-        ];
+        const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(q.word)}&tl=zh-TW&client=gtx`;
+        currentAudio = new Audio(audioUrl);
+        currentAudio.play().catch(error => {
+            console.log("Audio play failed, fallback to synthesis:", error);
+            fallbackSpeech(q.word);
+        });
+    }
 
-        let urlIndex = 0;
-        function tryPlay() {
-            if (urlIndex >= audioUrls.length) return;
-            currentAudio = new Audio();
-            currentAudio.crossOrigin = "anonymous";
-            currentAudio.preload = "auto";
-            currentAudio.src = audioUrls[urlIndex];
-            
-            const cloakRoom = document.getElementById('audio-cloak-room');
-            cloakRoom.innerHTML = '';
-            cloakRoom.appendChild(currentAudio);
-
-            currentAudio.play().catch(err => {
-                console.log("TTS mirror failed, trying next...", err);
-                urlIndex++;
-                tryPlay();
-            });
+    function fallbackSpeech(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'zh-TW';
+            utterance.rate = 0.9;
+            window.speechSynthesis.speak(utterance);
         }
-        tryPlay();
     }
 
     function startGame() {
@@ -521,7 +504,6 @@
         }
 
         const q = shuffledQuestions[currentIndex];
-        classCorrectPinyin = (selectedPinyin === q.pinyin);
         const isCorrectPinyin = (selectedPinyin === q.pinyin);
         const isCorrectHanzi = (selectedHanzi === q.word);
 
