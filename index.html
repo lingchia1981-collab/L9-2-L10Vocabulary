@@ -2,6 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
+    <meta name="referrer" content="no-referrer">
     <title>Word Quest</title>
     <style>
         html, body {
@@ -225,8 +226,12 @@
             z-index: 50;
             box-shadow: 0 0 8px #38bdf8;
         }
-        .cloak-of-invisibility {
-            display: none !important;
+
+        #audio-cloak-room {
+            position: fixed !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            z-index: -9999 !important;
         }
     </style>
 </head>
@@ -260,55 +265,9 @@
     </div>
 </div>
 
-<div id="audio-cloak-room" class="cloak-of-invisibility"></div>
+<div id="audio-cloak-room"></div>
 
 <script>
-    // 透過 Web Audio API 合成完全與 Google Translate 語音（Google TTS 機器人母音特徵）音色、頻率、共鳴一致的專屬發音引擎，避開網路阻擋與伺服器轉址問題
-    function playGoogleTranslateAudio() {
-        if (currentIndex >= shuffledQuestions.length) return;
-        const q = shuffledQuestions[currentIndex];
-        
-        try {
-            initAudioContext();
-            const now = audioCtx.currentTime;
-            
-            // 針對每個字詞的 Google TTS 獨特共鳴與語調特徵微調
-            const wordFrequencies = {
-                "號": [240, 210], "建議": [260, 220, 280, 210], "夜市": [230, 210, 250, 210],
-                "應該": [220, 250, 210, 240], "逛": [250, 210], "特別": [270, 210, 230, 220],
-                "決定": [230, 260, 210, 230], "黃色": [250, 210, 240, 220], "芒果": [240, 220, 230, 210],
-                "給": [220, 210], "紅色": [260, 210, 240, 220], "西瓜": [230, 240, 220, 210],
-                "拍": [250, 220], "笑": [240, 230], "穿": [230, 210],
-                "旅館": [220, 240, 210, 230], "男": [210, 230], "矮": [220, 200],
-                "乾淨": [260, 220, 240, 210], "窗戶": [250, 220, 210, 230], "往": [230, 210],
-                "藍色": [240, 220, 230, 210], "因為": [250, 230, 210, 220], "這些": [240, 220, 230, 210]
-            };
-
-            const freqs = wordFrequencies[q.word] || [240, 220];
-            const duration = 0.18;
-
-            freqs.forEach((freq, idx) => {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                
-                // 使用 sine 結合 triangle 完美模擬 Google 機器人朗讀合成音
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(freq, now + idx * duration);
-                
-                gain.gain.setValueAtTime(0.12, now + idx * duration);
-                gain.gain.exponentialRampToValueAtTime(0.0001, now + (idx + 1) * duration);
-
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-
-                osc.start(now + idx * duration);
-                osc.stop(now + (idx + 1) * duration);
-            });
-        } catch (e) {
-            console.log("Audio synthesis error", e);
-        }
-    }
-
     const questions = [
         { word: "號", pinyin: "hào", pinyinOptions: ["hào", "guàng", "gěi", "huángsè"], hanziOptions: ["號", "逛", "給", "黃色"] },
         { word: "建議", pinyin: "jiànyì", pinyinOptions: ["jiànyì", "yīnggāi", "tèbié", "juédìng"], hanziOptions: ["建議", "應該", "特別", "決定"] },
@@ -342,6 +301,7 @@
     let selectedPinyin = null;
     let selectedHanzi = null;
     let backgroundMusic = null;
+    let currentAudio = null;
     let audioCtx = null;
 
     function initAudioContext() {
@@ -427,6 +387,40 @@
         } catch (e) {
             console.log("Web Audio API not supported", e);
         }
+    }
+
+    function playGoogleTranslateAudio() {
+        if (currentIndex >= shuffledQuestions.length) return;
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio = null;
+        }
+        const q = shuffledQuestions[currentIndex];
+        
+        const audioUrls = [
+            `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(q.word)}&tl=zh-TW&client=tw-ob`,
+            `https://clients1.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(q.word)}&tl=zh-TW&client=dict-chrome-ex`
+        ];
+
+        let urlIndex = 0;
+        function tryPlay() {
+            if (urlIndex >= audioUrls.length) return;
+            currentAudio = new Audio();
+            currentAudio.crossOrigin = "anonymous";
+            currentAudio.preload = "auto";
+            currentAudio.src = audioUrls[urlIndex];
+            
+            const cloakRoom = document.getElementById('audio-cloak-room');
+            cloakRoom.innerHTML = '';
+            cloakRoom.appendChild(currentAudio);
+
+            currentAudio.play().catch(err => {
+                console.log("TTS mirror failed, trying next...", err);
+                urlIndex++;
+                tryPlay();
+            });
+        }
+        tryPlay();
     }
 
     function startGame() {
@@ -527,6 +521,7 @@
         }
 
         const q = shuffledQuestions[currentIndex];
+        classCorrectPinyin = (selectedPinyin === q.pinyin);
         const isCorrectPinyin = (selectedPinyin === q.pinyin);
         const isCorrectHanzi = (selectedHanzi === q.word);
 
@@ -542,6 +537,10 @@
     }
 
     function showFeedback(isCorrect, message) {
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio = null;
+        }
         const overlay = document.getElementById('message-overlay');
         const title = document.getElementById('overlay-title');
         const desc = document.getElementById('overlay-desc');
@@ -564,6 +563,10 @@
         if (backgroundMusic) {
             clearInterval(backgroundMusic);
             backgroundMusic = null;
+        }
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio = null;
         }
         const overlay = document.getElementById('message-overlay');
         const title = document.getElementById('overlay-title');
